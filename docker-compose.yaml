@@ -102,8 +102,8 @@ services:
         condition: service_started
       rabbitmq:
         condition: service_healthy
-    ports:
-      - ${INTERNAL_PORT:-3002}"
+    expose:
+      - "3002"
     command: node dist/src/harness.js --start-docker
     # Resource limits for Docker Compose (not Swarm)
     # Increase if you have more CPU cores/RAM available
