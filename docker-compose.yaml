@@ -104,6 +104,9 @@ services:
         condition: service_healthy
     expose:
       - "3002"
+    networks:
+      - backend
+      - dokploy-network
     command: node dist/src/harness.js --start-docker
     # Resource limits for Docker Compose (not Swarm)
     # Increase if you have more CPU cores/RAM available
