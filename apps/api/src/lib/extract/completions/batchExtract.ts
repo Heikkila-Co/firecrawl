@@ -25,6 +25,7 @@ type BatchExtractOptions = {
   extractId?: string;
   sessionId?: string;
   costTracking: CostTracking;
+  model?: string;
   metadata: {
     teamId: string;
     functionId?: string;
@@ -66,6 +67,7 @@ export async function batchExtractPromise(
     useAgent,
     extractId,
     sessionId,
+    model,
     metadata,
   } = options;
 
@@ -84,7 +86,7 @@ export async function batchExtractPromise(
     },
     markdown: buildDocument(doc),
     isExtractEndpoint: true,
-    model: getModel("gpt-4o-mini", "openai"),
+    model: model ? getModel(model, "openai") : getModel("gpt-4o-mini", "openai"),
     retryModel: getModel("gpt-4.1", "openai"),
     costTrackingOptions: {
       costTracking: options.costTracking,

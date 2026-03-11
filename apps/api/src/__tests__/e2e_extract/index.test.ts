@@ -373,5 +373,33 @@ describe("E2E Tests for Extract API Routes", () => {
         );
       },
     );
+
+    it.concurrent(
+      "should accept agent model parameter in extract request",
+      async () => {
+        const response = await request(TEST_URL)
+          .post("/v1/extract")
+          .set("Authorization", `Bearer ${config.TEST_API_KEY}`)
+          .set("Content-Type", "application/json")
+          .send({
+            urls: ["https://example.com"],
+            prompt: "What is the title of the page?",
+            schema: {
+              type: "object",
+              properties: {
+                title: { type: "string" },
+              },
+            },
+            agent: {
+              model: "gpt-4o-mini",
+            },
+          });
+
+        expect(response.statusCode).toBe(200);
+        expect(response.body.success).toBe(true);
+        expect(response.body).toHaveProperty("id");
+      },
+      60000,
+    );
   });
 });

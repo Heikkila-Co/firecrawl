@@ -470,6 +470,7 @@ export async function performExtraction_F0(
             request.systemPrompt ?? "",
             doc,
             { teamId, extractId, functionId: "performExtraction_F0" },
+            request.agent?.model,
           );
 
           // Race between timeout and completion
@@ -737,6 +738,7 @@ export async function performExtraction_F0(
       links,
       prompt: request.prompt ?? "",
       systemPrompt: request.systemPrompt ?? "",
+      model: request.agent?.model,
       metadata: { teamId, extractId, functionId: "performExtraction_F0" },
     });
     logger.debug("Done generating singleAnswer completions.");

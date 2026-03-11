@@ -2,6 +2,7 @@ import { logger } from "../../../../lib/logger";
 import { generateCompletions_F0 } from "../llmExtract-f0";
 import { buildDocument_F0 } from "../build-document-f0";
 import { Document, TokenUsage } from "../../../../controllers/v1/types";
+import { getModel } from "../../../../lib/generic-ai";
 
 export async function singleAnswerCompletion_F0({
   singleAnswerDocs,
@@ -10,12 +11,14 @@ export async function singleAnswerCompletion_F0({
   prompt,
   systemPrompt,
   metadata,
+  model,
 }: {
   singleAnswerDocs: Document[];
   rSchema: any;
   links: string[];
   prompt: string;
   systemPrompt: string;
+  model?: string;
   metadata: {
     teamId: string;
     functionId?: string;
@@ -40,6 +43,7 @@ export async function singleAnswerCompletion_F0({
     },
     markdown: singleAnswerDocs.map(x => buildDocument_F0(x)).join("\n"),
     isExtractEndpoint: true,
+    model: model ? getModel(model) : undefined,
     metadata: {
       ...metadata,
       functionId: metadata.functionId

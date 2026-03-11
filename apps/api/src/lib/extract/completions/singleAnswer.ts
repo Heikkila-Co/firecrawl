@@ -20,6 +20,7 @@ export async function singleAnswerCompletion({
   sessionId,
   costTracking,
   metadata,
+  model,
 }: {
   singleAnswerDocs: Document[];
   rSchema: any;
@@ -30,6 +31,7 @@ export async function singleAnswerCompletion({
   extractId: string;
   sessionId: string;
   costTracking: CostTracking;
+  model?: string;
   metadata: {
     teamId: string;
     functionId?: string;
@@ -58,7 +60,7 @@ export async function singleAnswerCompletion({
     },
     markdown: `${singleAnswerDocs.map((x, i) => `[START_PAGE (ID: ${i})]` + buildDocument(x)).join("\n")} [END_PAGE]\n`,
     isExtractEndpoint: true,
-    model: getModel("gpt-4o-mini", "openai"),
+    model: model ? getModel(model, "openai") : getModel("gpt-4o-mini", "openai"),
     retryModel: getModel("gpt-4.1", "openai"),
     costTrackingOptions: {
       costTracking,

@@ -7,6 +7,7 @@ import {
   buildBatchExtractSystemPrompt_F0,
 } from "../build-prompts-f0";
 import { buildDocument_F0 } from "../build-document-f0";
+import { getModel } from "../../../../lib/generic-ai";
 
 /**
  * Batch extract information from a list of URLs using a multi-entity schema.
@@ -29,6 +30,7 @@ export async function batchExtractPromise_F0(
     extractId?: string;
     scrapeId?: string;
   },
+  model?: string,
 ): Promise<{
   extract: any;
   numTokens: number;
@@ -52,6 +54,7 @@ export async function batchExtractPromise_F0(
     },
     markdown: buildDocument_F0(doc),
     isExtractEndpoint: true,
+    model: model ? getModel(model) : undefined,
     metadata: {
       ...metadata,
       functionId: metadata.functionId

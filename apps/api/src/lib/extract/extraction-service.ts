@@ -477,6 +477,7 @@ async function performExtraction(
                 extractId,
                 sessionId,
                 costTracking,
+                model: request.agent?.model,
                 metadata: {
                   teamId,
                   functionId: "performExtraction/multiEntity",
@@ -849,6 +850,7 @@ async function performExtraction(
         extractId,
         sessionId: thisSessionId,
         costTracking,
+        model: request.agent?.model,
         metadata: {
           teamId,
           functionId: "performExtraction",
