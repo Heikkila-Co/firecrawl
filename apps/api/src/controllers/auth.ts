@@ -1,22 +1,16 @@
-import { parseApi } from "../lib/parseApi";
-import { config } from "../config";
-import { getRateLimiter } from "../services/rate-limiter";
-import { AuthResponse, NotificationType, RateLimiterMode } from "../types";
-import {
-  supabase_acuc_only_service,
-  supabase_rr_service,
-  supabase_service,
-} from "../services/supabase";
-import { withAuth } from "../lib/withAuth";
 import { RateLimiterRedis } from "rate-limiter-flexible";
-import { sendNotification } from "../services/notification/email_notification";
-import { logger } from "../lib/logger";
-import { redlock } from "../services/redlock";
-import { deleteKey, getValue } from "../services/redis";
-import { setValue } from "../services/redis";
-import { getRedisConnection } from "../services/queue-service";
 import { validate } from "uuid";
-import * as Sentry from "@sentry/node";
+import { config } from "../config";
+import { logger } from "../lib/logger";
+import { parseApi } from "../lib/parseApi";
+import { withAuth } from "../lib/withAuth";
+import { getAgentSponsorStatus } from "../services/agent-sponsor";
+import { getRedisConnection } from "../services/queue-service";
+import { getRateLimiter } from "../services/rate-limiter";
+import { deleteKey, getValue, setValue } from "../services/redis";
+import { redlock } from "../services/redlock";
+import { supabase_rr_service, supabase_service } from "../services/supabase";
+import { AuthResponse, RateLimiterMode } from "../types";
 import { AuthCreditUsageChunk, AuthCreditUsageChunkFromTeam } from "./v1/types";
 
 function normalizedApiIsUuid(potentialUuid: string): boolean {
@@ -159,7 +153,7 @@ export async function getACUC(
     return acuc;
   }
 
-  if (config.USE_DB_AUTHENTICATION !== true && !config.SUPABASE_ACUC_URL) {
+  if (config.USE_DB_AUTHENTICATION !== true) {
     const acuc = mockACUC();
     acuc.is_extract = isExtract;
     return acuc;
@@ -180,13 +174,10 @@ export async function getACUC(
     let retries = 0;
     const maxRetries = 5;
     while (retries < maxRetries) {
-      const client = !!config.SUPABASE_ACUC_URL
-        ? supabase_acuc_only_service
-        : Math.random() > 2 / 3
-          ? supabase_rr_service
-          : supabase_service;
+      const client =
+        Math.random() > 2 / 3 ? supabase_rr_service : supabase_service;
       ({ data, error } = await client.rpc(
-        "auth_credit_usage_chunk_45",
+        "auth_credit_usage_chunk_46",
         {
           input_key: api_key,
           i_is_extract: isExtract,
@@ -288,7 +279,7 @@ export async function getACUCTeam(
     return acuc;
   }
 
-  if (config.USE_DB_AUTHENTICATION !== true && !config.SUPABASE_ACUC_URL) {
+  if (config.USE_DB_AUTHENTICATION !== true) {
     const acuc = mockACUC();
     acuc.is_extract = isExtract;
     return acuc;
@@ -310,13 +301,10 @@ export async function getACUCTeam(
     const maxRetries = 5;
 
     while (retries < maxRetries) {
-      const client = !!config.SUPABASE_ACUC_URL
-        ? supabase_acuc_only_service
-        : Math.random() > 2 / 3
-          ? supabase_rr_service
-          : supabase_service;
+      const client =
+        Math.random() > 2 / 3 ? supabase_rr_service : supabase_service;
       ({ data, error } = await client.rpc(
-        "auth_credit_usage_chunk_45_from_team",
+        "auth_credit_usage_chunk_46_from_team",
         {
           input_team: team_id,
           i_is_extract: isExtract,
@@ -395,10 +383,6 @@ export async function authenticateUser(
   res,
   mode?: RateLimiterMode,
 ): Promise<AuthResponse> {
-  if (!!config.SUPABASE_ACUC_URL) {
-    return supaAuthenticateUser(req, res, mode);
-  }
-
   return withAuth(supaAuthenticateUser, {
     success: true,
     chunk: null,
@@ -541,6 +525,27 @@ async function supaAuthenticateUser(
     // }
 
     // return { success: false, error: "Unauthorized: Invalid token", status: 401 };
+  }
+
+  // Check if this is an agent-provisioned key and attach sponsor status
+  if (chunk && chunk.api_key_id) {
+    try {
+      const sponsorStatus = await getAgentSponsorStatus({
+        apiKeyId: chunk.api_key_id,
+      });
+      if (sponsorStatus) {
+        chunk._agentSponsor = {
+          status: sponsorStatus.status,
+          verification_deadline: sponsorStatus.verification_deadline,
+          email: sponsorStatus.email,
+        };
+      }
+    } catch (err) {
+      logger.warn("Failed to check agent sponsor status", {
+        error: err,
+        api_key_id: chunk.api_key_id,
+      });
+    }
   }
 
   return {

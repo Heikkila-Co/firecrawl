@@ -1180,6 +1180,16 @@ export type CrawlStatusResponse =
       expiresAt: string;
       next?: string;
       data: Document[];
+    }
+  | {
+      success: false;
+      status: "failed";
+      error: string;
+      completed: number;
+      total: number;
+      creditsUsed: number;
+      expiresAt: string;
+      data: Document[];
     };
 
 export type OngoingCrawlsResponse =
@@ -1255,6 +1265,13 @@ export type AuthCreditUsageChunk = {
 
   // appended on JS-side
   is_extract?: boolean;
+
+  // Agent signup: populated when the key is agent-provisioned
+  _agentSponsor?: {
+    status: "pending" | "verified" | "blocked";
+    verification_deadline: string;
+    email: string;
+  } | null;
 };
 
 export type TeamFlags = {
